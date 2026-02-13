@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语听力学习系统</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🎧</span>
+                <h1>英语听力</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-page="articles">
+                    <span class="nav-icon">📚</span>
+                    <span>文章库</span>
+                </li>
+                <li class="nav-item" data-page="reading">
+                    <span class="nav-icon">📖</span>
+                    <span>阅读 & 标记</span>
+                </li>
+                <li class="nav-item" data-page="quiz">
+                    <span class="nav-icon">✍️</span>
+                    <span>听力测验</span>
+                </li>
+                <li class="nav-item" data-page="vocabulary">
+                    <span class="nav-icon">📝</span>
+                    <span>我的生词</span>
+                </li>
+                <li class="nav-item" data-page="plan">
+                    <span class="nav-icon">📅</span>
+                    <span>学习计划</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 音频播放器（全局，播放时显示） -->
+            <div id="audioPlayerPanel" class="audio-player-panel">
+                <div class="audio-player-controls">
+                    <button class="btn btn-primary" id="audioPlayerPlay">▶ 播放</button>
+                    <div class="audio-player-progress-wrap">
+                        <div class="audio-progress-bar">
+                            <div id="audioPlayerProgressFill" class="audio-progress-fill"></div>
+                        </div>
+                        <span id="audioPlayerProgressLabel" class="audio-progress-label">0/0</span>
+                    </div>
+                    <div class="audio-player-accent">
+                        <label>发音</label>
+                        <select id="audioPlayerAccent">
+                            <option value="en-US">美音</option>
+                            <option value="en-GB">英音</option>
+                        </select>
+                    </div>
+                    <div class="audio-player-speed">
+                        <label>倍速</label>
+                        <select id="audioPlayerSpeed">
+                            <option value="0.8">0.8x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-small" id="audioPlayerTest" title="测试系统语音是否正常">测试发音</button>
+                    <button class="btn btn-small audio-player-close" id="audioPlayerClose" title="收起播放器">✕</button>
+                </div>
+            </div>
+            <!-- 文章库页面 -->
+            <section id="page-articles" class="page active">
+                <div class="page-header">
+                    <h2>文章库</h2>
+                    <p class="subtitle">上传和管理您的英语文章</p>
+                </div>
+                <div class="upload-section">
+                    <div class="upload-box" id="uploadArea">
+                        <input type="file" id="fileInput" accept=".txt,.md,.doc,.docx" multiple>
+                        <span class="upload-icon">📤</span>
+                        <p>点击或拖拽文件到此上传</p>
+                        <p class="upload-hint">支持 .txt, .md 格式，也可直接粘贴文本</p>
+                    </div>
+                    <div class="paste-section">
+                        <label>或直接粘贴文章：</label>
+                        <div class="paste-row">
+                            <div class="form-group">
+                                <label>文章名称</label>
+                                <input type="text" id="articleName" placeholder="如：六级听力Passage 1">
+                            </div>
+                            <div class="form-group">
+                                <label>文章类型</label>
+                                <select id="articleType">
+                                    <option value="a">六级听力A部分（对话）</option>
+                                    <option value="b">六级听力B部分（recording）</option>
+                                    <option value="c">六级听力C部分（篇章/讲座）</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>保存日期</label>
+                                <input type="date" id="articleDate">
+                            </div>
+                        </div>
+                        <textarea id="pasteInput" placeholder="在此粘贴或输入英语文章..."></textarea>
+                        <button class="btn btn-primary" id="savePasted">保存文章</button>
+                    </div>
+                </div>
+                <div class="articles-list">
+                    <h3>已保存文章</h3>
+                    <div id="articlesContainer" class="articles-grid"></div>
+                </div>
+            </section>
+
+            <!-- 阅读 & 标记页面 -->
+            <section id="page-reading" class="page">
+                <div class="page-header">
+                    <h2>阅读 & 单词标记</h2>
+                    <p class="subtitle">选择文章进行阅读，点击单词进行标记</p>
+                </div>
+                <div class="reading-toolbar">
+                    <select id="articleSelect">
+                        <option value="">选择要阅读的文章</option>
+                    </select>
+                    <div class="toolbar-accent">
+                        <label>发音</label>
+                        <select id="readingAccent">
+                            <option value="en-US">美音</option>
+                            <option value="en-GB">英音</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="audioPlayBtn">🔊 播放音频</button>
+                    <div class="word-legend">
+                        <span class="legend-item" data-type="new"><span class="dot new"></span>新单词</span>
+                        <span class="legend-item" data-type="unclear"><span class="dot unclear"></span>听不出来</span>
+                        <span class="legend-item" data-type="repeat"><span class="dot repeat"></span>需要重复</span>
+                        <button class="btn btn-small" id="clearMarks">清除标记</button>
+                    </div>
+                </div>
+                <div class="reading-area">
+                    <div id="articleContent" class="article-text"></div>
+                    <div class="marked-words-panel">
+                        <h4>已标记单词</h4>
+                        <div id="markedWordsList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 听力测验页面 -->
+            <section id="page-quiz" class="page">
+                <div class="page-header">
+                    <h2>六级听力测验</h2>
+                    <p class="subtitle">基于文章自动生成的听力理解题</p>
+                </div>
+                <div class="quiz-setup">
+                    <select id="quizArticleSelect">
+                        <option value="">选择文章生成题目</option>
+                    </select>
+                    <button class="btn btn-primary" id="generateQuiz">生成测验题</button>
+                </div>
+                <div id="quizContainer" class="quiz-container"></div>
+            </section>
+
+            <!-- 我的生词页面 -->
+            <section id="page-vocabulary" class="page">
+                <div class="page-header">
+                    <h2>我的生词</h2>
+                    <p class="subtitle">所有文章中标记为「新单词」的词汇汇总</p>
+                </div>
+                <div class="vocabulary-stats">
+                    <span class="vocab-count">共 <strong id="vocabTotal">0</strong> 个生词</span>
+                </div>
+                <div class="vocabulary-toolbar">
+                    <input type="text" id="vocabSearch" placeholder="搜索生词..." class="vocab-search">
+                </div>
+                <div id="vocabularyList" class="vocabulary-list"></div>
+            </section>
+
+            <!-- 学习计划页面 -->
+            <section id="page-plan" class="page">
+                <div class="page-header">
+                    <h2>学习计划</h2>
+                    <p class="subtitle">安排学习任务，追踪学习进度</p>
+                </div>
+                <div id="practiceTypeSelect" class="practice-type-select">
+                    <h3>选择今日学习任务</h3>
+                    <div class="practice-type-cards">
+                        <div class="practice-type-card" data-type="listen_word">
+                            <span class="card-icon">🎧</span>
+                            <h4>听音记单词</h4>
+                            <p>播放单词发音，输入英文拼写</p>
+                        </div>
+                        <div class="practice-type-card" data-type="cet6_quiz">
+                            <span class="card-icon">✍️</span>
+                            <h4>六级真题题型</h4>
+                            <p>选词填空、六级听力题</p>
+                        </div>
+                        <div class="practice-type-card" data-type="shadow">
+                            <span class="card-icon">🗣️</span>
+                            <h4>逐句跟读训练</h4>
+                            <p>跟读句子，系统打分，80分以上过关</p>
+                        </div>
+                        <div class="practice-type-card" data-type="dictation">
+                            <span class="card-icon">📝</span>
+                            <h4>句子倾听默写</h4>
+                            <p>听句子，默写，词间留空</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="practiceArea" class="practice-area"></div>
+                <div class="plan-actions">
+                    <button class="btn btn-primary" id="addTaskBtn">+ 添加任务</button>
+                    <button class="btn btn-ai" id="aiPlanBtn">🤖 AI 生成计划</button>
+                </div>
+                <div class="plan-overview">
+                    <div class="stat-card">
+                        <span class="stat-value" id="completedTasks">0</span>
+                        <span class="stat-label">已完成</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalTasks">0</span>
+                        <span class="stat-label">总任务</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="streakDays">0</span>
+                        <span class="stat-label">连续天数</span>
+                    </div>
+                </div>
+                <div class="tasks-section trend-section">
+                    <h3>学习趋势</h3>
+                    <div class="trend-tabs">
+                        <button class="trend-tab active" data-days="7">近7天</button>
+                        <button class="trend-tab" data-days="14">近14天</button>
+                        <button class="trend-tab" data-days="30">近30天</button>
+                    </div>
+                    <div id="studyTrendChart" class="study-trend-chart"></div>
+                </div>
+                <div class="tasks-section">
+                    <h3>今日任务</h3>
+                    <div id="todayTasks"></div>
+                </div>
+                <div class="tasks-section">
+                    <h3>全部任务</h3>
+                    <div id="allTasks"></div>
+                </div>
+                <div class="progress-section">
+                    <h3>学习记录</h3>
+                    <div id="studyHistory" class="study-calendar"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 模态框：保存上传的文章 -->
+    <div id="saveArticleModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-close="saveArticleModal">&times;</span>
+            <h3>保存文章</h3>
+            <div class="form-group">
+                <label>文章名称</label>
+                <input type="text" id="uploadArticleName" placeholder="输入文章名称">
+            </div>
+            <div class="form-group">
+                <label>文章类型</label>
+                <select id="uploadArticleType">
+                    <option value="a">六级听力A部分（对话）</option>
+                    <option value="b">六级听力B部分（recording）</option>
+                    <option value="c">六级听力C部分（篇章/讲座）</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>保存日期</label>
+                <input type="date" id="uploadArticleDate">
+            </div>
+            <button class="btn btn-primary" id="confirmSaveUpload">保存</button>
+        </div>
+    </div>
+
+    <!-- 模态框：AI 生成计划 -->
+    <div id="aiPlanModal" class="modal">
+        <div class="modal-content modal-lg">
+            <span class="modal-close" data-close="aiPlanModal">&times;</span>
+            <h3>🤖 AI 智能生成学习计划</h3>
+            <p class="modal-hint">AI 将根据您的文章、标记单词和学习情况，为您生成个性化的学习计划。</p>
+            <div class="form-group">
+                <label>API Key（必填）<a href="https://platform.openai.com/api-keys" target="_blank" class="link">获取 OpenAI Key</a></label>
+                <input type="password" id="aiApiKey" placeholder="sk-xxx...">
+            </div>
+            <div class="form-group">
+                <label>API 地址（可选，默认 OpenAI 官方）</label>
+                <input type="text" id="aiBaseUrl" placeholder="留空使用默认">
+            </div>
+            <div class="form-group">
+                <label>补充说明（可选）</label>
+                <textarea id="aiPlanExtra" rows="2" placeholder="如：备考六级、每天可学习1小时、重点练听力..."></textarea>
+            </div>
+            <div id="aiPlanResult" class="ai-result" style="display:none;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="saveAiConfig">保存配置</button>
+                <button class="btn btn-primary" id="generateAiPlan">
+                    <span class="btn-text">生成计划</span>
+                    <span class="btn-loading" style="display:none;">生成中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：添加任务 -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h3>添加学习任务</h3>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label>任务内容</label>
+                    <input type="text" id="taskContent" placeholder="如：背诵Unit1生词" required>
+                </div>
+                <div class="form-group">
+                    <label>关联文章（可选）</label>
+                    <select id="taskArticle">
+                        <option value="">无</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>计划日期</label>
+                    <input type="date" id="taskDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">添加</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/articles.js"></script>
+    <script src="js/word-api.js"></script>
+    <script src="js/audio-player.js"></script>
+    <script src="js/quiz.js"></script>
+    <script src="js/vocabulary.js"></script>
+    <script src="js/ai-plan.js"></script>
+    <script src="js/plan.js"></script>
+    <script src="js/practice.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
