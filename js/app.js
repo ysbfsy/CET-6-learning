@@ -2,6 +2,7 @@
  * 主应用入口 - 导航、初始化
  */
 document.addEventListener('DOMContentLoaded', () => {
+    FirebaseAuth.init();
     ArticlesManager.init();
     AudioPlayer.init();
     QuizManager.init();
