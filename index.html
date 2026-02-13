@@ -15,7 +15,7 @@
                 <span class="logo-icon">🎧</span>
                 <h1>英语听力</h1>
             </div>
-            <div id="userStatus" class="user-status"></div>
+            <div id="userStatus" class="user-status"><button class="btn btn-primary btn-small btn-login">登录 / 注册</button></div>
             <ul class="nav-menu">
                 <li class="nav-item active" data-page="articles">
                     <span class="nav-icon">📚</span>
@@ -45,7 +45,7 @@
             <!-- 顶部登录栏 -->
             <div class="main-header">
                 <div></div>
-                <div id="userStatusHeader" class="user-status-header"></div>
+                <div id="userStatusHeader" class="user-status-header"><button class="btn btn-primary btn-small btn-login">登录 / 注册</button></div>
             </div>
             <!-- 音频播放器（全局，播放时显示） -->
             <div id="audioPlayerPanel" class="audio-player-panel">
@@ -363,20 +363,32 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/articles.js"></script>
-    <script src="js/word-api.js"></script>
-    <script src="js/audio-player.js"></script>
-    <script src="js/quiz.js"></script>
-    <script src="js/vocabulary.js"></script>
-    <script src="js/ai-plan.js"></script>
-    <script src="js/plan.js"></script>
-    <script src="js/practice.js"></script>
-    <script src="js/firebase-auth.js"></script>
-    <script src="js/app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase-config.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/articles.js" defer></script>
+    <script src="js/word-api.js" defer></script>
+    <script src="js/audio-player.js" defer></script>
+    <script src="js/quiz.js" defer></script>
+    <script src="js/vocabulary.js" defer></script>
+    <script src="js/ai-plan.js" defer></script>
+    <script src="js/plan.js" defer></script>
+    <script src="js/practice.js" defer></script>
+    <script src="js/firebase-auth.js" defer></script>
+    <script src="js/app.js" defer></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof FirebaseAuth !== 'undefined') return;
+        document.querySelectorAll('.btn-login').forEach(function(btn) {
+            if (btn.dataset.bound) return;
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', function() {
+                alert('登录功能加载失败，请检查网络连接（Firebase 可能被拦截）后刷新重试');
+            });
+        });
+    });
+    </script>
 </body>
 </html>
