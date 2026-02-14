@@ -7,6 +7,7 @@ const FirebaseAuth = {
     unsubscribe: null,
 
     init() {
+        this.bindAuthModal();
         if (typeof firebase === 'undefined' || !FirebaseConfig?.apiKey || FirebaseConfig.apiKey === 'YOUR_API_KEY') {
             this.renderLoginStatus(false);
             return;
@@ -34,18 +35,68 @@ const FirebaseAuth = {
         }
     },
 
+    _mergeValue(key, localVal, remoteVal) {
+        if (remoteVal === undefined) return localVal;
+        if (localVal === null || localVal === undefined) return remoteVal;
+        if (key === Storage.keys.ARTICLES) {
+            const local = Array.isArray(localVal) ? localVal : [];
+            const remote = Array.isArray(remoteVal) ? remoteVal : [];
+            if (remote.length === 0) return local;
+            if (local.length === 0) return remote;
+            const map = new Map();
+            remote.forEach(a => map.set(a.id, a));
+            local.forEach(a => map.set(a.id, a));
+            return Array.from(map.values());
+        }
+        if (key === Storage.keys.WORD_MARKS || key === Storage.keys.VOCAB_META) {
+            const local = localVal && typeof localVal === 'object' ? localVal : {};
+            const remote = remoteVal && typeof remoteVal === 'object' ? remoteVal : {};
+            return { ...remote, ...local };
+        }
+        if (key === Storage.keys.TASKS) {
+            const local = Array.isArray(localVal) ? localVal : [];
+            const remote = Array.isArray(remoteVal) ? remoteVal : [];
+            if (remote.length === 0) return local;
+            if (local.length === 0) return remote;
+            const map = new Map();
+            remote.forEach(t => map.set(t.id || t.date + t.content, t));
+            local.forEach(t => map.set(t.id || t.date + t.content, t));
+            return Array.from(map.values());
+        }
+        if (key === Storage.keys.STUDY_HISTORY) {
+            const local = localVal && typeof localVal === 'object' ? localVal : {};
+            const remote = remoteVal && typeof remoteVal === 'object' ? remoteVal : {};
+            const merged = { ...remote };
+            Object.keys(local).forEach(d => {
+                const l = Array.isArray(local[d]) ? local[d] : [];
+                const r = Array.isArray(merged[d]) ? merged[d] : [];
+                if (l.length > 0 || r.length > 0) {
+                    const map = new Map();
+                    r.forEach(x => map.set(JSON.stringify(x), x));
+                    l.forEach(x => map.set(JSON.stringify(x), x));
+                    merged[d] = Array.from(map.values());
+                }
+            });
+            return merged;
+        }
+        return remoteVal;
+    },
+
     loadUserData(uid) {
         this.db.collection('users').doc(uid).get().then(doc => {
             if (doc.exists) {
-                const data = doc.data();
+                const remote = doc.data();
                 Storage.setSuppressSync(true);
                 Object.keys(Storage.keys).forEach(k => {
                     const key = Storage.keys[k];
-                    if (data[key] !== undefined) {
-                        Storage.set(key, data[key]);
+                    if (remote[key] !== undefined) {
+                        const localVal = Storage.get(key);
+                        const merged = this._mergeValue(key, localVal, remote[key]);
+                        Storage.set(key, merged);
                     }
                 });
                 Storage.setSuppressSync(false);
+                this.saveAllToFirestore(uid);
             } else {
                 this.saveAllToFirestore(uid);
             }
@@ -118,8 +169,8 @@ const FirebaseAuth = {
 
     openLoginModal() {
         document.getElementById('authModal')?.classList.add('active');
-        document.getElementById('authError').textContent = '';
-        this.bindAuthModal();
+        const errEl = document.getElementById('authError');
+        if (errEl) errEl.textContent = '';
     },
 
     closeLoginModal() {
@@ -150,13 +201,24 @@ const FirebaseAuth = {
             const password = document.getElementById('authPassword')?.value;
             const errEl = document.getElementById('authError');
             const submitBtn = document.getElementById('authSubmit');
-            if (!email || !password) return;
+            if (!email || !password) {
+                if (errEl) errEl.textContent = '请填写邮箱和密码';
+                return;
+            }
+            if (!this.auth) {
+                if (errEl) errEl.textContent = 'Firebase 未加载，请检查网络（可能被拦截）后刷新';
+                return;
+            }
 
-            errEl.textContent = '';
-            submitBtn.disabled = true;
+            if (errEl) errEl.textContent = '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.dataset.originalText = submitBtn.textContent;
+                submitBtn.textContent = '处理中...';
+            }
 
             try {
-                if (document.getElementById('authForm').dataset.mode === 'register') {
+                if (document.getElementById('authForm')?.dataset.mode === 'register') {
                     await this.register(email, password);
                 } else {
                     await this.login(email, password);
@@ -168,10 +230,14 @@ const FirebaseAuth = {
                     err.code === 'auth/weak-password' ? '密码至少6位' :
                     err.code === 'auth/user-not-found' ? '该邮箱未注册' :
                     err.code === 'auth/wrong-password' ? '密码错误' :
+                    err.code === 'auth/network-request-failed' ? '网络请求失败，请检查网络' :
                     err.message || '操作失败';
-                errEl.textContent = msg;
+                if (errEl) errEl.textContent = msg;
             }
-            submitBtn.disabled = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = submitBtn.dataset.originalText || '登录';
+            }
         });
     }
 };
